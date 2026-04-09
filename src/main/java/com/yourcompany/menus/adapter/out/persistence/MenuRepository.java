@@ -188,7 +188,7 @@ public class MenuRepository implements IMenuRepository {
     }
 
     private LocalDate toLocalDate(Date sqlDate) {
-        return sqlDate == null ? LocalDate.now() : sqlDate.toLocalDate();
+        return sqlDate == null ? null : sqlDate.toLocalDate();
     }
 
     private Connection openConnection() throws SQLException {
@@ -209,34 +209,39 @@ public class MenuRepository implements IMenuRepository {
         private static final String DEFAULT_PORT = "3306";
 
         private static DbSettings load() {
-            Map<String, String> values = new HashMap<>(loadDotEnv());
+            DotEnvResult dotEnvResult = loadDotEnvWithMetadata();
+            Map<String, String> values = new HashMap<>(dotEnvResult.values());
             values.putAll(System.getenv());
 
             String explicitUrl = values.get("MYSQL_URL");
             if (explicitUrl != null && !explicitUrl.isBlank()) {
-                return new DbSettings(explicitUrl, require(values, "MYSQL_USER"), require(values, "MYSQL_PASSWORD"));
+                return new DbSettings(explicitUrl, require(values, "MYSQL_USER", dotEnvResult), require(values, "MYSQL_PASSWORD", dotEnvResult));
             }
 
-            String host = require(values, "MYSQL_HOST");
+            String host = require(values, "MYSQL_HOST", dotEnvResult);
             String port = values.getOrDefault("MYSQL_PORT", DEFAULT_PORT);
-            String database = require(values, "MYSQL_DATABASE");
-            String user = require(values, "MYSQL_USER");
-            String password = require(values, "MYSQL_PASSWORD");
-            String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC";
+            String database = require(values, "MYSQL_DATABASE", dotEnvResult);
+            String user = require(values, "MYSQL_USER", dotEnvResult);
+            String password = require(values, "MYSQL_PASSWORD", dotEnvResult);
+            String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true";
             return new DbSettings(url, user, password);
         }
 
-        private static Map<String, String> loadDotEnv() {
+        private static DotEnvResult loadDotEnvWithMetadata() {
             Map<String, String> env = new HashMap<>();
-            Path path = resolveDotEnvPath();
+            DotEnvPathResolution resolution = resolveDotEnvPath();
+            String source = "none";
 
-            if (path != null && Files.exists(path)) {
-                loadDotEnvFromPath(path, env);
-                return env;
+            if (resolution.selectedPath() != null && Files.exists(resolution.selectedPath())) {
+                loadDotEnvFromPath(resolution.selectedPath(), env);
+                source = "file:" + resolution.selectedPath();
+                return new DotEnvResult(env, source, toStrings(resolution.checkedPaths()));
             }
 
-            loadDotEnvFromResource(env);
-            return env;
+            if (loadDotEnvFromResource(env)) {
+                source = "classpath:/.env";
+            }
+            return new DotEnvResult(env, source, toStrings(resolution.checkedPaths()));
         }
 
         private static void loadDotEnvFromPath(Path path, Map<String, String> env) {
@@ -256,10 +261,11 @@ public class MenuRepository implements IMenuRepository {
             }
         }
 
-        private static void loadDotEnvFromResource(Map<String, String> env) {
+        private static boolean loadDotEnvFromResource(Map<String, String> env) {
+            int initialSize = env.size();
             try (InputStream inputStream = MenuRepository.class.getResourceAsStream("/.env")) {
                 if (inputStream == null) {
-                    return;
+                    return false;
                 }
                 try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
                     StringBuilder content = new StringBuilder();
@@ -282,21 +288,31 @@ public class MenuRepository implements IMenuRepository {
             } catch (IOException ignored) {
                 // Fallback silencieux: on utilisera les variables d'environnement du systeme.
             }
+            return env.size() > initialSize;
         }
 
-        private static Path resolveDotEnvPath() {
+        private static DotEnvPathResolution resolveDotEnvPath() {
+            List<Path> checkedPaths = new ArrayList<>();
             String customPath = firstNonBlank(System.getenv("MENUS_DOTENV_PATH"), System.getProperty("MENUS_DOTENV_PATH"));
-            if (customPath == null || customPath.isBlank()) {
-                customPath = firstExistingCandidate(
-                        Path.of(".env"),
-                        Path.of(System.getProperty("user.dir", ".")).resolve(".env"),
-                        Path.of(System.getProperty("user.home", ".")).resolve(".env")
-                );
-            }
             if (customPath != null && !customPath.isBlank()) {
-                return Path.of(customPath);
+                Path selected = Path.of(customPath);
+                checkedPaths.add(selected);
+                return new DotEnvPathResolution(selected, checkedPaths);
             }
-            return null;
+
+            String instanceRoot = System.getProperty("com.sun.aas.instanceRoot");
+            if (instanceRoot != null && !instanceRoot.isBlank()) {
+                Path domainRoot = Path.of(instanceRoot);
+                checkedPaths.add(domainRoot.resolve(".env"));
+                checkedPaths.add(domainRoot.resolve("config").resolve(".env"));
+            }
+
+            checkedPaths.add(Path.of(".env"));
+            checkedPaths.add(Path.of(System.getProperty("user.dir", ".")).resolve(".env"));
+            checkedPaths.add(Path.of(System.getProperty("user.home", ".")).resolve(".env"));
+
+            Path selectedPath = firstExistingCandidate(checkedPaths);
+            return new DotEnvPathResolution(selectedPath, checkedPaths);
         }
 
         private static String firstNonBlank(String... values) {
@@ -308,21 +324,34 @@ public class MenuRepository implements IMenuRepository {
             return null;
         }
 
-        private static String firstExistingCandidate(Path... candidates) {
+        private static Path firstExistingCandidate(List<Path> candidates) {
             for (Path candidate : candidates) {
                 if (candidate != null && Files.exists(candidate)) {
-                    return candidate.toString();
+                    return candidate;
                 }
             }
             return null;
         }
 
-        private static String require(Map<String, String> values, String key) {
+        private static String require(Map<String, String> values, String key, DotEnvResult dotEnvResult) {
             String value = values.get(key);
             if (value == null || value.isBlank()) {
-                throw new IllegalStateException("Configuration manquante: " + key + " (variable d'environnement, .env ou MENUS_DOTENV_PATH)");
+                throw new IllegalStateException(
+                        "Configuration manquante: " + key
+                                + " (variable d'environnement, .env ou MENUS_DOTENV_PATH). "
+                                + "Source .env=" + dotEnvResult.source()
+                                + ", chemins testes=" + String.join(" ; ", dotEnvResult.checkedPaths())
+                );
             }
             return value;
+        }
+
+        private static List<String> toStrings(List<Path> paths) {
+            List<String> values = new ArrayList<>();
+            for (Path path : paths) {
+                values.add(path.toAbsolutePath().normalize().toString());
+            }
+            return values;
         }
 
         private static String stripQuotes(String value) {
@@ -330,6 +359,12 @@ public class MenuRepository implements IMenuRepository {
                 return value.substring(1, value.length() - 1);
             }
             return value;
+        }
+
+        private record DotEnvPathResolution(Path selectedPath, List<Path> checkedPaths) {
+        }
+
+        private record DotEnvResult(Map<String, String> values, String source, List<String> checkedPaths) {
         }
     }
 }

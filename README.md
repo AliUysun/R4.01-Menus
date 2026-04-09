@@ -13,7 +13,7 @@ Architecture simple en couches (domain / application / adapter / config) pour ex
 
 Base URL (GlassFish):
 
-- `http://localhost:8080/menus/api`
+- `http://localhost:8080/R401-Menus-1.0-SNAPSHOT/api`
 
 Routes:
 
@@ -37,6 +37,12 @@ Exemple de body `POST /menus`:
 ## Configuration BDD MySQL
 
 Le repository lit d'abord le fichier `.env` (non versionne), puis les variables d'environnement systeme.
+
+Sous GlassFish, place le fichier `.env` ici (recommande):
+
+- `<glassfish>/glassfish/domains/domain1/config/.env`
+
+Alternative: definir `MENUS_DOTENV_PATH` (variable d'environnement OS ou option JVM) pour pointer vers un chemin absolu.
 
 Variables attendues:
 
