@@ -11,9 +11,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * Tests pour le service métier MenuDomainService
+ */
 class MenuMetierTest {
 
-    private final MenuMetier menuMetier = new MenuMetier();
+    private final MenuDomainService menuDomainService = new MenuDomainService();
 
     @Test
     void calculePrixTotal() {
@@ -22,7 +25,7 @@ class MenuMetierTest {
                 new Plat(2, "Burger", new BigDecimal("10.50"))
         ));
 
-        BigDecimal total = menuMetier.calculerPrixTotal(menu);
+        BigDecimal total = menuDomainService.calculerPrixTotal(menu);
 
         assertEquals(new BigDecimal("15.50"), total);
     }
@@ -33,7 +36,27 @@ class MenuMetierTest {
                 new Plat(1, "Salade", new BigDecimal("5.00"))
         ));
 
-        assertThrows(IllegalArgumentException.class, () -> menuMetier.validerMenu(menu));
+        assertThrows(IllegalArgumentException.class, () -> menuDomainService.validerMenu(menu));
+    }
+
+    @Test
+    void accepteMenuAvecNom() {
+        Menu menu = new Menu(1, "Menu Valide", 2, "Martin", LocalDate.now(), LocalDate.now(), List.of(
+                new Plat(1, "Salade", new BigDecimal("5.00"))
+        ));
+
+        // Ne doit pas lever d'exception
+        menuDomainService.validerMenu(menu);
+    }
+
+    @Test
+    void calculePrixTotalZeroSiAucunPlat() {
+        Menu menu = new Menu(1, "Vide", 2, "Martin", LocalDate.now(), LocalDate.now(), List.of());
+
+        BigDecimal total = menuDomainService.calculerPrixTotal(menu);
+
+        assertEquals(BigDecimal.ZERO, total);
     }
 }
+
 
