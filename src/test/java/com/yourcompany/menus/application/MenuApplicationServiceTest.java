@@ -1,15 +1,12 @@
 package com.yourcompany.menus.application;
 
 import com.yourcompany.menus.application.port.IMenuRepository;
-import com.yourcompany.menus.application.port.IPlatClient;
 import com.yourcompany.menus.application.port.IUserClient;
 import com.yourcompany.menus.domain.entity.Menu;
-import com.yourcompany.menus.domain.entity.Plat;
 import com.yourcompany.menus.domain.service.MenuDomainService;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +24,6 @@ class MenuApplicationServiceTest {
 
     private final MenuDomainService menuDomainService = new MenuDomainService();
     private final FakeMenuRepository repository = new FakeMenuRepository();
-    private final FakePlatClient platClient = new FakePlatClient();
     private final FakeUserClient userClient = new FakeUserClient();
     private final MenuApplicationService service = createServiceWithFakes();
 
@@ -38,10 +34,6 @@ class MenuApplicationServiceTest {
             var menuRepositoryField = MenuApplicationService.class.getDeclaredField("menuRepository");
             menuRepositoryField.setAccessible(true);
             menuRepositoryField.set(svc, repository);
-
-            var platClientField = MenuApplicationService.class.getDeclaredField("platClient");
-            platClientField.setAccessible(true);
-            platClientField.set(svc, platClient);
 
             var userClientField = MenuApplicationService.class.getDeclaredField("userClient");
             userClientField.setAccessible(true);
@@ -99,36 +91,6 @@ class MenuApplicationServiceTest {
     }
 
     @Test
-    void ajouteUnPlatAuMenu() {
-        Menu menu = service.createMenu("Menu Vide", 1);
-
-        Menu updated = service.addPlatToMenu(menu.getId(), 1);
-
-        assertEquals(1, updated.getPlats().size());
-        assertEquals("Salade", updated.getPlats().get(0).getNom());
-        assertEquals(new BigDecimal("5.00"), updated.getPrixTotal());
-    }
-
-    @Test
-    void rejetteSiPlatDejaPresentDansMenu() {
-        Menu menu = service.createMenu("Menu", 1);
-        service.addPlatToMenu(menu.getId(), 1);
-
-        assertThrows(IllegalStateException.class, () -> service.addPlatToMenu(menu.getId(), 1));
-    }
-
-    @Test
-    void retirePlatDuMenu() {
-        Menu menu = service.createMenu("Menu", 1);
-        service.addPlatToMenu(menu.getId(), 1);
-
-        Menu updated = service.removePlatFromMenu(menu.getId(), 1);
-
-        assertEquals(0, updated.getPlats().size());
-        assertEquals(BigDecimal.ZERO, updated.getPrixTotal());
-    }
-
-    @Test
     void mettAJourUnMenu() {
         Menu menu = service.createMenu("Ancien Nom", 1);
 
@@ -181,17 +143,6 @@ class MenuApplicationServiceTest {
         }
     }
 
-    private static class FakePlatClient implements IPlatClient {
-        @Override
-        public Plat getPlatById(Integer id) {
-            return switch (id) {
-                case 1 -> new Plat(1, "Salade", new BigDecimal("5.00"));
-                case 2 -> new Plat(2, "Burger", new BigDecimal("10.50"));
-                case 3 -> new Plat(3, "Pizza", new BigDecimal("12.00"));
-                default -> throw new IllegalArgumentException("Plat inconnu: " + id);
-            };
-        }
-    }
 
     private static class FakeUserClient implements IUserClient {
         @Override

@@ -21,19 +21,10 @@ public class MenuSqlQueries {
     public static final String SELECT_MENU_BY_ID = 
             "SELECT id, nom, createur_id, createur_nom, date_creation, date_mise_a_jour, prix_total FROM menus WHERE id = ?";
     
-    public static final String SELECT_PLATS_BY_MENU = 
-            "SELECT plat_id, plat_nom, plat_prix FROM menu_plats WHERE menu_id = ? ORDER BY plat_id";
-    
     public static final String UPSERT_MENU = 
             "INSERT INTO menus (id, nom, createur_id, createur_nom, date_creation, date_mise_a_jour, prix_total) VALUES (?, ?, ?, ?, ?, ?, ?) " +
             "ON DUPLICATE KEY UPDATE nom = VALUES(nom), createur_id = VALUES(createur_id), createur_nom = VALUES(createur_nom), " +
             "date_creation = VALUES(date_creation), date_mise_a_jour = VALUES(date_mise_a_jour), prix_total = VALUES(prix_total)";
-    
-    public static final String DELETE_MENU_PLATS = 
-            "DELETE FROM menu_plats WHERE menu_id = ?";
-    
-    public static final String INSERT_MENU_PLAT = 
-            "INSERT INTO menu_plats (menu_id, plat_id, plat_nom, plat_prix) VALUES (?, ?, ?, ?)";
     
     public static final String DELETE_MENU = 
             "DELETE FROM menus WHERE id = ?";

@@ -1,16 +1,14 @@
 package com.yourcompany.menus.application;
 
 import com.yourcompany.menus.application.port.IMenuRepository;
-import com.yourcompany.menus.application.port.IPlatClient;
 import com.yourcompany.menus.application.port.IUserClient;
 import com.yourcompany.menus.domain.entity.Menu;
-import com.yourcompany.menus.domain.entity.Plat;
 import com.yourcompany.menus.domain.service.MenuDomainService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,9 +31,6 @@ public class MenuApplicationService {
     private IMenuRepository menuRepository;
 
     @Inject
-    private IPlatClient platClient;
-
-    @Inject
     private IUserClient userClient;
 
     @Inject
@@ -56,9 +51,9 @@ public class MenuApplicationService {
     public Menu createMenu(String nom, Integer createurId) {
         String createurNom = resolveCreateurNom(createurId);
         LocalDate now = LocalDate.now();
-        Menu menu = new Menu(menuRepository.nextId(), nom, createurId, createurNom, now, now, null);
+        Menu menu = new Menu(menuRepository.nextId(), nom, createurId, createurNom, now, now);
         menuDomainService.validerMenu(menu);
-        menu.setPrixTotal(menuDomainService.calculerPrixTotal(menu));
+        menu.setPrixTotal(BigDecimal.ZERO);
         return menuRepository.save(menu);
     }
 
@@ -66,14 +61,10 @@ public class MenuApplicationService {
     /**
      * Liste tous les menus
      * 
-     * @return la liste complète de tous les menus avec leurs prix calculés
+     * @return la liste complete de tous les menus
      */
     public List<Menu> listMenus() {
-        List<Menu> menus = menuRepository.findAll();
-        for (Menu menu : menus) {
-            menu.setPrixTotal(menuDomainService.calculerPrixTotal(menu));
-        }
-        return menus;
+        return menuRepository.findAll();
     }
 
     /**
@@ -85,7 +76,6 @@ public class MenuApplicationService {
      */
     public Menu getMenuById(Integer id) {
         return menuRepository.findById(id)
-                .map(this::refreshPrixTotal)
                 .orElseThrow(() -> new IllegalArgumentException("Menu introuvable: " + id));
     }
 
@@ -109,57 +99,7 @@ public class MenuApplicationService {
         menu.setCreateurNom(resolveCreateurNom(createurId));
         menu.setDateMiseAJour(LocalDate.now());
         menuDomainService.validerMenu(menu);
-        refreshPrixTotal(menu);
         return menuRepository.save(menu);
-    }
-
-    /**
-     * Ajoute un plat au menu
-     * 
-     * @param id l'identifiant du menu
-     * @param platId l'identifiant du plat à ajouter
-     * @return le menu mis à jour
-     * @throws IllegalArgumentException si le menu ou le plat n'existe pas
-     * @throws IllegalStateException si le plat est déjà présent dans le menu
-     */
-    public Menu addPlatToMenu(Integer id, Integer platId) {
-        Menu menu = menuRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Menu introuvable: " + id));
-
-        boolean dejaPresent = menu.getPlats().stream().anyMatch(plat -> plat.getId().equals(platId));
-        if (dejaPresent) {
-            throw new IllegalStateException("Plat deja present dans ce menu: " + platId);
-        }
-
-        Plat plat = platClient.getPlatById(platId);
-        var plats = new ArrayList<>(menu.getPlats());
-        plats.add(plat);
-        menu.setPlats(plats);
-        menu.setDateMiseAJour(LocalDate.now());
-        return menuRepository.save(refreshPrixTotal(menu));
-    }
-
-    /**
-     * Retire un plat du menu
-     * 
-     * @param id l'identifiant du menu
-     * @param platId l'identifiant du plat à retirer
-     * @return le menu mis à jour
-     * @throws IllegalArgumentException si le menu n'existe pas ou le plat n'est pas dans le menu
-     */
-    public Menu removePlatFromMenu(Integer id, Integer platId) {
-        Menu menu = menuRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Menu introuvable: " + id));
-
-        var plats = new ArrayList<>(menu.getPlats());
-        boolean removed = plats.removeIf(plat -> plat.getId().equals(platId));
-        if (!removed) {
-            throw new IllegalArgumentException("Plat absent du menu: " + platId);
-        }
-
-        menu.setPlats(plats);
-        menu.setDateMiseAJour(LocalDate.now());
-        return menuRepository.save(refreshPrixTotal(menu));
     }
 
 
@@ -192,15 +132,5 @@ public class MenuApplicationService {
         return userClient.getUserNameById(createurId);
     }
 
-    /**
-     * Recalcule et met à jour le prix total du menu
-     * 
-     * @param menu le menu à mettre à jour
-     * @return le menu avec le prix total mis à jour
-     */
-    private Menu refreshPrixTotal(Menu menu) {
-        menu.setPrixTotal(menuDomainService.calculerPrixTotal(menu));
-        return menu;
-    }
 }
 

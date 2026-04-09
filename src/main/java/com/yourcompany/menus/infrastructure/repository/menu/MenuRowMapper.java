@@ -1,15 +1,12 @@
 package com.yourcompany.menus.infrastructure.repository.menu;
 
 import com.yourcompany.menus.domain.entity.Menu;
-import com.yourcompany.menus.domain.entity.Plat;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
- * Mappeur pour convertir les ResultSet SQL en objets Menu/Plat
+ * Mappeur pour convertir les ResultSet SQL en objets Menu
  * 
  * RESPONSABILITÉ UNIQUE : conversion données SQL → objets domaine
  * 
@@ -40,25 +37,5 @@ public class MenuRowMapper {
         return menu;
     }
 
-    /**
-     * Charge les plats d'un menu depuis un ResultSet
-     * 
-     * Itère sur les lignes du ResultSet et crée une liste d'objets Plat
-     * 
-     * @param rs le ResultSet positionné sur les lignes de plats
-     * @return la liste des plats mappés
-     * @throws SQLException si un accès au ResultSet échoue
-     */
-    public static List<Plat> mapPlats(ResultSet rs) throws SQLException {
-        List<Plat> plats = new ArrayList<>();
-        while (rs.next()) {
-            plats.add(new Plat(
-                    rs.getInt("plat_id"),
-                    rs.getString("plat_nom"),
-                    rs.getBigDecimal("plat_prix")
-            ));
-        }
-        return plats;
-    }
 }
 

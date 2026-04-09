@@ -2,13 +2,11 @@ package com.yourcompany.menus.domain.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Entité Menu du domaine métier
  * 
- * Représente un menu composé de plusieurs plats avec ses métadonnées.
+ * Représente un menu avec ses métadonnées.
  * Cette classe est l'entité principale du domaine, indépendante de toute infrastructure.
  * 
  * @author Projet Menus
@@ -21,7 +19,6 @@ public class Menu {
     private String createurNom;
     private LocalDate dateCreation;
     private LocalDate dateMiseAJour;
-    private List<Plat> plats = new ArrayList<>();
     private BigDecimal prixTotal = BigDecimal.ZERO;
 
     /**
@@ -39,16 +36,14 @@ public class Menu {
      * @param createurNom nom du créateur
      * @param dateCreation date de création
      * @param dateMiseAJour date de dernière mise à jour
-     * @param plats liste des plats du menu
      */
-    public Menu(Integer id, String nom, Integer createurId, String createurNom, LocalDate dateCreation, LocalDate dateMiseAJour, List<Plat> plats) {
+    public Menu(Integer id, String nom, Integer createurId, String createurNom, LocalDate dateCreation, LocalDate dateMiseAJour) {
         this.id = id;
         this.nom = nom;
         this.createurId = createurId;
         this.createurNom = createurNom;
         this.dateCreation = dateCreation;
         this.dateMiseAJour = dateMiseAJour;
-        setPlats(plats);
     }
 
     /**
@@ -148,24 +143,8 @@ public class Menu {
     }
 
     /**
-     * Obtient la liste des plats du menu
-     * @return une copie de la liste des plats
-     */
-    public List<Plat> getPlats() {
-        return new ArrayList<>(plats);
-    }
-
-    /**
-     * Définit la liste des plats du menu
-     * @param plats la liste des plats
-     */
-    public void setPlats(List<Plat> plats) {
-        this.plats = plats == null ? new ArrayList<>() : new ArrayList<>(plats);
-    }
-
-    /**
      * Obtient le prix total du menu
-     * @return le prix total (somme des prix des plats)
+     * @return le prix total du menu
      */
     public BigDecimal getPrixTotal() {
         return prixTotal;

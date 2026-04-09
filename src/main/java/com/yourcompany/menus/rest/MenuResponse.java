@@ -1,16 +1,14 @@
 package com.yourcompany.menus.rest;
 
 import com.yourcompany.menus.domain.entity.Menu;
-import com.yourcompany.menus.domain.entity.Plat;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 /**
  * DTO pour la réponse HTTP d'un menu
  * 
- * Contient la sérialisation JSON d'un menu avec ses métadonnées et ses plats.
+ * Contient la sérialisation JSON d'un menu avec ses métadonnées.
  * Cette classe sépare la représentation HTTP de l'entité domaine.
  * 
  * @author Projet Menus
@@ -23,7 +21,6 @@ public class MenuResponse {
     private String createurNom;
     private LocalDate dateCreation;
     private LocalDate dateMiseAJour;
-    private List<PlatResponse> plats;
     private BigDecimal prixTotal;
 
     /**
@@ -40,7 +37,6 @@ public class MenuResponse {
         response.setCreateurNom(menu.getCreateurNom());
         response.setDateCreation(menu.getDateCreation());
         response.setDateMiseAJour(menu.getDateMiseAJour());
-        response.setPlats(menu.getPlats().stream().map(PlatResponse::fromDomain).toList());
         response.setPrixTotal(menu.getPrixTotal());
         return response;
     }
@@ -94,14 +90,6 @@ public class MenuResponse {
         this.dateMiseAJour = dateMiseAJour;
     }
 
-    public List<PlatResponse> getPlats() {
-        return plats;
-    }
-
-    public void setPlats(List<PlatResponse> plats) {
-        this.plats = plats;
-    }
-
     public BigDecimal getPrixTotal() {
         return prixTotal;
     }
@@ -110,45 +98,5 @@ public class MenuResponse {
         this.prixTotal = prixTotal;
     }
 
-    /**
-     * DTO pour un plat en réponse
-     */
-    public static class PlatResponse {
-        private Integer id;
-        private String nom;
-        private BigDecimal prix;
-
-        public static PlatResponse fromDomain(Plat plat) {
-            PlatResponse response = new PlatResponse();
-            response.setId(plat.getId());
-            response.setNom(plat.getNom());
-            response.setPrix(plat.getPrix());
-            return response;
-        }
-
-        public Integer getId() {
-            return id;
-        }
-
-        public void setId(Integer id) {
-            this.id = id;
-        }
-
-        public String getNom() {
-            return nom;
-        }
-
-        public void setNom(String nom) {
-            this.nom = nom;
-        }
-
-        public BigDecimal getPrix() {
-            return prix;
-        }
-
-        public void setPrix(BigDecimal prix) {
-            this.prix = prix;
-        }
-    }
 }
 

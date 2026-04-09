@@ -4,9 +4,10 @@ Architecture simple en couches (domain / application / adapter / config) pour ex
 
 ## Structure
 
-- `com.yourcompany.menus.domain`: entites et logique metier (`IMenuMetier`, `MenuMetier`)
+- `com.yourcompany.menus.domain`: entites et logique metier (`Menu`, `MenuDomainService`)
 - `com.yourcompany.menus.application`: ports et services applicatifs
-- `com.yourcompany.menus.adapter`: REST entrant et adaptateurs sortants (`MenuRepository`, `PlatClient`)
+- `com.yourcompany.menus.infrastructure`: adaptateurs sortants (`MenuRepository`, `UserClient`)
+- `com.yourcompany.menus.rest`: API REST entrante (`MenuController`)
 - `com.yourcompany.menus.config`: configuration JAX-RS
 
 ## Endpoints
@@ -22,8 +23,6 @@ Routes:
 - `GET /menus/{id}`
 - `PUT /menus/{id}`
 - `DELETE /menus/{id}`
-- `PUT /menus/{id}/plats/{platId}`
-- `DELETE /menus/{id}/plats/{platId}`
 
 Exemple de body `POST /menus`:
 
@@ -65,5 +64,5 @@ Optionnel: pour pointer vers un autre fichier `.env`, definir `MENUS_DOTENV_PATH
 ## Notes de migration
 
 - Nouveau nom principal du repository: `MenuRepository`
-- Nouveau nom principal du client plats: `PlatClient`
-- Alias temporaires conserves pour compatibilite: `MenuRepositoryJpa`, `PlatServiceRestClient`, `IPlatService`
+- Nouveau nom principal du client utilisateurs: `UserClient`
+- Alias temporaires conserves pour compatibilite: `MenuRepositoryJpa`

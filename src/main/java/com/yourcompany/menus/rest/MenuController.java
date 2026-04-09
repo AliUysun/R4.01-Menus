@@ -125,44 +125,6 @@ public class MenuController {
         }
     }
 
-    /**
-     * PUT /menus/{id}/plats/{platId} - Ajouter un plat au menu
-     * 
-     * @param id l'identifiant du menu
-     * @param platId l'identifiant du plat
-     * @return le menu mis à jour
-     * @throws NotFoundException si le menu ou le plat n'existe pas
-     * @throws WebApplicationException avec status 409 si le plat est déjà présent
-     */
-    @PUT
-    @Path("/{id}/plats/{platId}")
-    public MenuResponse addPlatToMenu(@PathParam("id") Integer id, @PathParam("platId") Integer platId) {
-        try {
-            return MenuResponse.fromDomain(menuApplicationService.addPlatToMenu(id, platId));
-        } catch (IllegalArgumentException e) {
-            throw new NotFoundException(e.getMessage());
-        } catch (IllegalStateException e) {
-            throw new WebApplicationException(e.getMessage(), Response.Status.CONFLICT);
-        }
-    }
-
-    /**
-     * DELETE /menus/{id}/plats/{platId} - Retirer un plat du menu
-     * 
-     * @param id l'identifiant du menu
-     * @param platId l'identifiant du plat
-     * @return le menu mis à jour
-     * @throws NotFoundException si le menu n'existe pas ou le plat n'est pas dans le menu
-     */
-    @DELETE
-    @Path("/{id}/plats/{platId}")
-    public MenuResponse removePlatFromMenu(@PathParam("id") Integer id, @PathParam("platId") Integer platId) {
-        try {
-            return MenuResponse.fromDomain(menuApplicationService.removePlatFromMenu(id, platId));
-        } catch (IllegalArgumentException e) {
-            throw new NotFoundException(e.getMessage());
-        }
-    }
 
     /**
      * Convertit une exception métier en exception HTTP appropriée

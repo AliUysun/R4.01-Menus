@@ -2,7 +2,6 @@ package com.yourcompany.menus.infrastructure.repository.menu;
 
 import com.yourcompany.menus.application.port.IMenuRepository;
 import com.yourcompany.menus.domain.entity.Menu;
-import com.yourcompany.menus.domain.entity.Plat;
 import com.yourcompany.menus.infrastructure.repository.connection.DbConnectionManager;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -52,9 +51,7 @@ public class MenuRepository implements IMenuRepository {
     /**
      * Sauvegarde ou met à jour un menu en base de données
      * 
-     * Gère une transaction :
-     * - Insérer/mettre à jour le menu
-     * - Remplacer tous les plats associés
+     * Gère une transaction d'upsert sur la table menus.
      * 
      * @param menu le menu à sauvegarder
      * @return le menu sauvegardé
@@ -66,7 +63,6 @@ public class MenuRepository implements IMenuRepository {
             conn.setAutoCommit(false);
             try {
                 insertOrUpdateMenu(conn, menu);
-                deleteAndInsertPlats(conn, menu);
                 conn.commit();
                 return menu;
             } catch (SQLException e) {
@@ -81,7 +77,7 @@ public class MenuRepository implements IMenuRepository {
     /**
      * Récupère tous les menus de la base de données
      * 
-     * @return la liste de tous les menus avec leurs plats
+     * @return la liste de tous les menus
      * @throws IllegalStateException si une erreur SQL survient
      */
     @Override
@@ -91,9 +87,7 @@ public class MenuRepository implements IMenuRepository {
              ResultSet rs = stmt.executeQuery()) {
             List<Menu> menus = new java.util.ArrayList<>();
             while (rs.next()) {
-                Menu menu = MenuRowMapper.mapMenu(rs);
-                menu.setPlats(loadPlatsByMenuId(conn, menu.getId()));
-                menus.add(menu);
+                menus.add(MenuRowMapper.mapMenu(rs));
             }
             return menus;
         } catch (SQLException e) {
@@ -115,9 +109,7 @@ public class MenuRepository implements IMenuRepository {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (!rs.next()) return Optional.empty();
-                Menu menu = MenuRowMapper.mapMenu(rs);
-                menu.setPlats(loadPlatsByMenuId(conn, id));
-                return Optional.of(menu);
+                return Optional.of(MenuRowMapper.mapMenu(rs));
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Impossible de recuperer le menu " + id, e);
@@ -156,35 +148,5 @@ public class MenuRepository implements IMenuRepository {
         }
     }
 
-    private void deleteAndInsertPlats(Connection conn, Menu menu) throws SQLException {
-        // Supprimer les plats existants
-        try (PreparedStatement stmt = conn.prepareStatement(MenuSqlQueries.DELETE_MENU_PLATS)) {
-            stmt.setInt(1, menu.getId());
-            stmt.executeUpdate();
-        }
-
-        // Insérer les nouveaux plats
-        if (!menu.getPlats().isEmpty()) {
-            try (PreparedStatement stmt = conn.prepareStatement(MenuSqlQueries.INSERT_MENU_PLAT)) {
-                for (Plat plat : menu.getPlats()) {
-                    stmt.setInt(1, menu.getId());
-                    stmt.setInt(2, plat.getId());
-                    stmt.setString(3, plat.getNom());
-                    stmt.setBigDecimal(4, plat.getPrix());
-                    stmt.addBatch();
-                }
-                stmt.executeBatch();
-            }
-        }
-    }
-
-    private List<Plat> loadPlatsByMenuId(Connection conn, Integer menuId) throws SQLException {
-        try (PreparedStatement stmt = conn.prepareStatement(MenuSqlQueries.SELECT_PLATS_BY_MENU)) {
-            stmt.setInt(1, menuId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                return MenuRowMapper.mapPlats(rs);
-            }
-        }
-    }
 }
 
