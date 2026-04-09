@@ -19,7 +19,7 @@ import java.util.List;
  * - Les services externes (clients API)
  * - Le service métier pour la logique
  * 
- * Cette classe gère tous les use-cases (CRUD + opérations métier) sur les menus.
+ * Cette classe gère tous les use-cases sur les menus.
  * 
  * @author Projet Menus
  * @version 1.0

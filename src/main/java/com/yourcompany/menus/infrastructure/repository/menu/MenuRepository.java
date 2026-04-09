@@ -133,7 +133,6 @@ public class MenuRepository implements IMenuRepository {
         }
     }
 
-    // ==================== PRIVATE SQL METHODS ====================
 
     private void insertOrUpdateMenu(Connection conn, Menu menu) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(MenuSqlQueries.UPSERT_MENU)) {

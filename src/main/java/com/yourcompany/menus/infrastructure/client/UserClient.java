@@ -16,7 +16,6 @@ import java.net.http.HttpResponse;
  * Client HTTP pour récupérer les utilisateurs depuis l'API "Plats et Utilisateurs"
  * 
  * Implémente le port IUserClient.
- * Appelle l'API distante sur http://localhost:3003/utilisateurs
  * 
  * @author Projet Menus
  * @version 1.0

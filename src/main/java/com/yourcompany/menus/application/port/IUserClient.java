@@ -4,7 +4,7 @@ package com.yourcompany.menus.application.port;
  * Port de sortie pour accéder aux utilisateurs
  * 
  * Interface de contrat pour récupérer les informations des utilisateurs depuis l'API externe "Plats et Utilisateurs".
- * Implémentée par UserClient (infrastructure layer).
+ * Implémentée par UserClient.
  * 
  * @author Projet Menus
  * @version 1.0
